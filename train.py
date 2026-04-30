@@ -235,7 +235,7 @@ def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
         df.groupby("City")["AQI"]
         .transform(lambda x: x.rolling(7, min_periods=1).std().fillna(0))
     )
-
+# “How much did AQI change compared to the previous day?”
     df["AQI_delta"] = df.groupby("City")["AQI"].diff().fillna(0)
 
     df.dropna(subset=["AQI_lag1", "AQI_lag3", "AQI_lag7"], inplace=True)

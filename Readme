@@ -36,7 +36,9 @@ machine learning, with automated health advisories and a live web dashboard.
 ### 3. Add your API key (optional — for live data)
 Create a `.env` file in the project root:
 ```
-OWM_API_KEY=your_free_api_key_here
+OWM_API_KEY=58512efcd478bf101f6d4849ac7de2f4
+
+
 ```
 Get a free key at: https://openweathermap.org/api/air-pollution
 
@@ -44,7 +46,8 @@ Get a free key at: https://openweathermap.org/api/air-pollution
 ```bash
 python train.py
 
-run : C:\Users\inert\AppData\Local\Programs\Python\Python310\python.exe train.py
+run :
+C:\Users\inert\AppData\Local\Programs\Python\Python310\python.exe train.py
 ```
 This takes 5–15 minutes depending on your machine.
 Saves trained models to `models/` and plots to `plots/`.
@@ -102,10 +105,3 @@ Link: https://www.kaggle.com/datasets/rohanrao/air-quality-data-in-india
 
 ---
 
-## Performance (expected)
-
-| Model | Accuracy | F1 (weighted) |
-|---|---|---|
-| Random Forest | ~90–93% | ~0.89–0.92 |
-| XGBoost | ~88–92% | ~0.87–0.91 |
-| LSTM (regression) | RMSE ~25–40 | MAE ~18–30 |
