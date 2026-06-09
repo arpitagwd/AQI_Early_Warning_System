@@ -253,3 +253,90 @@ def fetch_historical_aqi(city: str, days: int = 7, api_key: str = None) -> pd.Da
 def get_city_list() -> list:
     """Return sorted list of all supported cities."""
     return sorted(CITY_COORDS.keys())
+
+# new
+
+def fetch_recent_aqi_values(city: str, days: int = 30, 
+                             api_key: str = None) -> list:
+    """
+    Fetch the last `days` days of daily average AQI values for a city.
+    Returns a plain Python list of floats, oldest first.
+    Returns empty list if API call fails.
+    
+    Used specifically for computing lag features in build_feature_vector().
+    """
+    if api_key is None:
+        api_key = get_api_key()
+
+    if not api_key:
+        print("[live_api] No API key — cannot fetch live lag features")
+        return []
+
+    df = fetch_historical_aqi(city, days=days, api_key=api_key)
+
+    if df is None or len(df) == 0:
+        print(f"[live_api] No historical data returned for {city}")
+        return []
+
+    # Make sure AQI column exists
+    if "AQI" not in df.columns:
+        df["AQI"] = df.apply(
+            lambda row: calculate_aqi_from_pollutants(row.to_dict()), 
+            axis=1
+        )
+
+    # Sort oldest → newest, return as plain list
+    df = df.sort_values("Date")
+    aqi_list = df["AQI"].tolist()
+
+    print(f"[live_api] Fetched {len(aqi_list)} days of live AQI for {city}")
+    print(f"[live_api] AQI range: {min(aqi_list):.0f} – {max(aqi_list):.0f}")
+
+    return aqi_list
+
+
+def fetch_recent_aqi_values(city: str, days: int = 30,
+                              api_key: str = None) -> list:
+    """
+    Fetch the last `days` days of daily average AQI for a city.
+    Returns a plain list of floats sorted oldest → newest.
+    Returns empty list if the API call fails or city not found.
+
+    Used by build_feature_vector() in app.py to populate lag features
+    with genuinely recent AQI values instead of 2020 Kaggle data.
+    """
+    if api_key is None:
+        api_key = get_api_key()
+
+    if not api_key:
+        print("[live_api] No API key — cannot fetch live lag features")
+        return []
+
+    if city not in CITY_COORDS:
+        print(f"[live_api] City '{city}' not in CITY_COORDS")
+        return []
+
+    # Fetch historical daily averages (already handles AQI calculation)
+    df = fetch_historical_aqi(city, days=days, api_key=api_key)
+
+    if df is None or len(df) == 0:
+        print(f"[live_api] No historical data returned for {city}")
+        return []
+
+    # Calculate AQI from pollutants if not already present
+    if "AQI" not in df.columns:
+        df["AQI"] = df.apply(
+            lambda row: calculate_aqi_from_pollutants(row.to_dict()),
+            axis=1
+        )
+
+    # Sort oldest first, return as plain Python list
+    df = df.sort_values("Date")
+    aqi_list = [float(v) for v in df["AQI"].tolist()]
+
+    print(f"[live_api] Fetched {len(aqi_list)} days of live AQI for {city}")
+    if aqi_list:
+        print(f"[live_api] Range: {min(aqi_list):.0f} – {max(aqi_list):.0f} "
+              f"| Most recent: {aqi_list[-1]:.0f}")
+
+    return aqi_list
